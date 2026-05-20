@@ -1,4 +1,3 @@
-import '../styles/EmptyState.css';
 
 const EmptyState = ({ 
   icon = '📚', 

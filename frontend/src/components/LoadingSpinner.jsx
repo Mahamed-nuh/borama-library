@@ -1,4 +1,3 @@
-import '../styles/LoadingSpinner.css';
 
 const LoadingSpinner = ({ size = 'md', text = 'Loading...' }) => {
   const sizeClass = `spinner-${size}`;

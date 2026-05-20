@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { bookAPI } from '../services/api';
-import '../styles/AddBookModal.css';
 
 const AddBookModal = ({ onClose, onBookAdded }) => {
   const [formData, setFormData] = useState({

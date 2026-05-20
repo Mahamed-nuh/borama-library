@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import BookRow from './BookRow';
-import '../styles/BookTable.css';
 
 const BookTable = ({ books, onDelete, onStatusUpdate }) => {
   const [editingId, setEditingId] = useState(null);

@@ -1,5 +1,4 @@
 import React from 'react';
-import '../styles/BookRow.css';
 
 const BookRow = ({
   book,
