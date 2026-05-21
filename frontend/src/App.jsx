@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import BookInventory from './pages/BookInventory';
+import Categories from './pages/Categories';
+import Loans from './pages/Loans';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -33,6 +35,26 @@ function App() {
           element={
             <ProtectedRoute>
               <BookInventory />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected Categories route */}
+        <Route
+          path="/categories"
+          element={
+            <ProtectedRoute>
+              <Categories />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected Loans route */}
+        <Route
+          path="/loans"
+          element={
+            <ProtectedRoute>
+              <Loans />
             </ProtectedRoute>
           }
         />

@@ -14,23 +14,12 @@ const bookSchema = new mongoose.Schema({
   },
   isbn: {
     type: String,
-    required: [true, 'Please provide an ISBN'],
+    required: false,
     unique: true,
     trim: true,
   },
   category: {
     type: String,
-    enum: [
-      'History of Borama',
-      'Somali Poetry',
-      'Digital Systems',
-      'Agriculture',
-      'Literature',
-      'Science',
-      'Technology',
-      'Arts',
-      'Other',
-    ],
     required: [true, 'Please provide a category'],
   },
   status: {
@@ -40,8 +29,9 @@ const bookSchema = new mongoose.Schema({
   },
   location: {
     type: String,
-    required: [true, 'Please provide a shelf location'],
+    required: false,
     trim: true,
+    default: 'Not assigned',
   },
   publisher: {
     type: String,
@@ -76,7 +66,7 @@ const bookSchema = new mongoose.Schema({
   },
   borrowedBy: [
     {
-      userId: mongoose.Schema.Types.ObjectId,
+      borrowerName: String,
       borrowDate: Date,
       dueDate: Date,
       returnDate: Date,

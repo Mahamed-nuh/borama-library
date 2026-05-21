@@ -1,299 +1,250 @@
-import React, { useState } from 'react';
-import { bookAPI } from '../services/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { XMarkIcon, BookOpenIcon, TagIcon, LanguageIcon, HashtagIcon } from '@heroicons/react/24/outline';
+import { bookAPI, categoryAPI } from '../services/api';
+
+const LANGUAGE_OPTIONS = ['Somali', 'English', 'Arabic', 'French', 'Other'];
 
 const AddBookModal = ({ onClose, onBookAdded }) => {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    isbn: '',
     category: 'History of Borama',
-    location: '',
-    publisher: '',
-    publicationYear: new Date().getFullYear(),
-    pages: '',
     language: 'Somali',
-    description: '',
     quantity: 1,
   });
-
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  const categories = [
-    'History of Borama',
-    'Somali Poetry',
-    'Digital Systems',
-    'Agriculture',
-    'Literature',
-    'Science',
-    'Technology',
-    'Arts',
-    'Other',
-  ];
+  const quantityValue = useMemo(() => Number.parseInt(formData.quantity, 10) || 1, [formData.quantity]);
 
-  const languages = ['Somali', 'English', 'Arabic', 'French', 'Other'];
+  useEffect(() => {
+    let isMounted = true;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
+    const loadCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const response = await categoryAPI.list();
+        const categories = response.data.categories || [];
+        const names = categories.map((category) => category.name);
+
+        if (!isMounted) return;
+
+        setCategoryOptions(names);
+        setFormData((previous) => ({
+          ...previous,
+          category: names.includes(previous.category) ? previous.category : names[0] || '',
+        }));
+      } catch (err) {
+        if (isMounted) {
+          setCategoryOptions([]);
+          setError(err.response?.data?.message || 'Failed to load categories');
+        }
+      } finally {
+        if (isMounted) {
+          setCategoriesLoading(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((previous) => ({
+      ...previous,
       [name]: value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
 
-    // Validation
     if (!formData.title.trim()) {
       setError('Please enter a book title');
       return;
     }
+
     if (!formData.author.trim()) {
       setError('Please enter an author name');
       return;
     }
-    if (!formData.isbn.trim()) {
-      setError('Please enter an ISBN');
-      return;
-    }
-    if (!formData.location.trim()) {
-      setError('Please enter a shelf location');
+
+    if (!formData.category.trim()) {
+      setError('Please create a category first');
       return;
     }
 
     try {
       setLoading(true);
       await bookAPI.createBook({
-        ...formData,
-        pages: formData.pages ? parseInt(formData.pages) : undefined,
-        publicationYear: parseInt(formData.publicationYear),
-        quantity: parseInt(formData.quantity) || 1,
+        title: formData.title.trim(),
+        author: formData.author.trim(),
+        category: formData.category,
+        language: formData.language,
+        quantity: quantityValue,
       });
 
       onBookAdded();
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          'Failed to create book. Please check if ISBN is unique.'
-      );
+      setError(err.response?.data?.message || 'Failed to create book. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Add New Book</h2>
-          <button className="btn-close" onClick={onClose}>
-            ×
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between border-b border-slate-200 bg-gradient-to-r from-indigo-600 to-sky-600 px-6 py-5 text-white">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Book Management</p>
+            <h2 className="mt-1 text-2xl font-bold">Add New Book</h2>
+            <p className="mt-1 text-sm text-white/80">Keep entry focused on the core fields used across the library.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            aria-label="Close add book modal"
+          >
+            <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="add-book-form">
-          {/* Required Fields */}
-          <div className="form-section">
-            <h3>Required Information</h3>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="title">
-                  Book Title <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Enter book title"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="author">
-                  Author <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="author"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleChange}
-                  placeholder="Enter author name"
-                  required
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="grid gap-6 p-6 md:p-8">
+          {error && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
             </div>
+          )}
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="isbn">
-                  ISBN <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="isbn"
-                  name="isbn"
-                  value={formData.isbn}
-                  onChange={handleChange}
-                  placeholder="e.g., 978-3-16-148410-0"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="location">
-                  Shelf Location <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  placeholder="e.g., Main Hall, Shelf A - 102"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Category and Language */}
-          <div className="form-section">
-            <h3>Classification</h3>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="category">Category</label>
-                <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="language">Language</label>
-                <select
-                  id="language"
-                  name="language"
-                  value={formData.language}
-                  onChange={handleChange}
-                >
-                  {languages.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Publisher Information */}
-          <div className="form-section">
-            <h3>Publisher Information</h3>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="publisher">Publisher</label>
-                <input
-                  type="text"
-                  id="publisher"
-                  name="publisher"
-                  value={formData.publisher}
-                  onChange={handleChange}
-                  placeholder="Publisher name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="publicationYear">Publication Year</label>
-                <input
-                  type="number"
-                  id="publicationYear"
-                  name="publicationYear"
-                  value={formData.publicationYear}
-                  onChange={handleChange}
-                  min="1000"
-                  max={new Date().getFullYear()}
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="pages">Number of Pages</label>
-                <input
-                  type="number"
-                  id="pages"
-                  name="pages"
-                  value={formData.pages}
-                  onChange={handleChange}
-                  min="1"
-                  placeholder="e.g., 350"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="quantity">Quantity</label>
-                <input
-                  type="number"
-                  id="quantity"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  min="1"
-                  placeholder="Number of copies"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="form-section">
-            <h3>Description</h3>
-
-            <div className="form-group full-width">
-              <label htmlFor="description">Book Description</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700" htmlFor="title">
+                <BookOpenIcon className="h-4 w-4 text-indigo-600" />
+                Book Name
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
-                placeholder="Enter a brief description of the book..."
-                rows="4"
+                placeholder="Enter book name"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700" htmlFor="author">
+                <BookOpenIcon className="h-4 w-4 text-indigo-600" />
+                Author
+              </label>
+              <input
+                type="text"
+                id="author"
+                name="author"
+                value={formData.author}
+                onChange={handleChange}
+                placeholder="Enter author name"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                disabled={loading}
+                required
               />
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="form-actions">
+          <div className="grid gap-5 md:grid-cols-3">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700" htmlFor="category">
+                <TagIcon className="h-4 w-4 text-indigo-600" />
+                Classification
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                disabled={loading || categoriesLoading || categoryOptions.length === 0}
+              >
+                {categoryOptions.length === 0 ? (
+                  <option value="">No categories available</option>
+                ) : (
+                  categoryOptions.map((categoryOption) => (
+                    <option key={categoryOption} value={categoryOption}>
+                      {categoryOption}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700" htmlFor="language">
+                <LanguageIcon className="h-4 w-4 text-indigo-600" />
+                Language
+              </label>
+              <select
+                id="language"
+                name="language"
+                value={formData.language}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                disabled={loading}
+              >
+                {LANGUAGE_OPTIONS.map((languageOption) => (
+                  <option key={languageOption} value={languageOption}>
+                    {languageOption}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700" htmlFor="quantity">
+                <HashtagIcon className="h-4 w-4 text-indigo-600" />
+                Quantity
+              </label>
+              <input
+                type="number"
+                id="quantity"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleChange}
+                min="1"
+                step="1"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
-              className="btn-cancel"
               onClick={onClose}
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-submit"
+              className="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
               disabled={loading}
             >
               {loading ? 'Adding Book...' : 'Add Book'}

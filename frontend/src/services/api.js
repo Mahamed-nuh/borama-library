@@ -58,4 +58,25 @@ export const bookAPI = {
   getInventoryStats: () => API.get('/books/stats'),
 };
 
+// Categories API
+export const categoryAPI = {
+  list: () => API.get('/categories'),
+  create: (data) => API.post('/categories', data),
+  delete: (id) => API.delete(`/categories/${id}`),
+};
+
+// Loans API
+export const loanAPI = {
+  list: () => API.get('/loans'),
+  create: (data) => API.post('/loans', data),
+  returnBook: (loanId) => API.put(`/loans/${loanId}/return`),
+  extendLoan: (loanId, days = 7) => API.put(`/loans/${loanId}/extend`, { days }),
+};
+
+// Users API
+export const userAPI = {
+  list: () => API.get('/users'),
+  getUser: (id) => API.get(`/users/${id}`),
+};
+
 export default API;

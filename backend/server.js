@@ -7,6 +7,9 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const bookRoutes = require('./routes/books');
+const categoryRoutes = require('./routes/categories');
+const loanRoutes = require('./routes/loans');
+const userRoutes = require('./routes/users');
 
 // Initialize Express app
 const app = express();
@@ -22,6 +25,9 @@ app.use(express.json()); // Parse JSON request bodies
 app.use('/api/auth', authRoutes); // Authentication endpoints
 app.use('/api/dashboard', dashboardRoutes); // Dashboard endpoints
 app.use('/api/books', bookRoutes); // Book management endpoints
+app.use('/api/categories', categoryRoutes);
+app.use('/api/loans', loanRoutes);
+app.use('/api/users', userRoutes); // Users endpoints
 
 // Test route to check if server is running
 app.get('/api/test', (req, res) => {

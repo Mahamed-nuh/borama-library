@@ -1,13 +1,35 @@
 // Dashboard page component
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import Sidebar from '../components/Sidebar';
-import { UsersIcon, BookOpenIcon, DocumentArrowUpIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, BookOpenIcon, DocumentArrowUpIcon, ExclamationTriangleIcon, TagIcon } from '@heroicons/react/24/outline';
+
+const formatRelativeTime = (timestamp) => {
+  if (!timestamp) return 'Just now';
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return 'Just now';
+
+  const diffInMinutes = Math.floor((Date.now() - date.getTime()) / 60000);
+
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+
+  return date.toLocaleDateString();
+};
 
 const Dashboard = () => {
   // State for dashboard data
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -15,13 +37,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        // Get user data from localStorage
-        const storedUser = JSON.parse(localStorage.getItem('user'));
-        setUser(storedUser);
-
-        // Fetch dashboard data from API (requires token)
         const response = await authAPI.dashboard();
-        setStats(response.data.data.stats);
+        const dashboardData = response.data.data;
+
+        setUser(dashboardData.user);
+        setStats(dashboardData.stats);
+        setRecentActivity(dashboardData.recentActivity || []);
         setError('');
       } catch (err) {
         console.error('Error fetching dashboard:', err);
@@ -68,7 +89,7 @@ const Dashboard = () => {
           </div>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-4">
               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
                 <UsersIcon className="w-6 h-6" />
@@ -76,7 +97,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Members</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.totalUsers || 0}</p>
-                <p className="text-xs font-medium text-emerald-600 mt-1">+2 this week</p>
+                <p className="text-xs font-medium text-emerald-600 mt-1">Live from database</p>
               </div>
             </div>
 
@@ -87,7 +108,18 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Books</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.totalBooks || 0}</p>
-                <p className="text-xs font-medium text-emerald-600 mt-1">+5 new books</p>
+                <p className="text-xs font-medium text-emerald-600 mt-1">Live from database</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-4">
+              <div className="p-3 bg-violet-50 text-violet-600 rounded-xl">
+                <TagIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Categories</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.categories || 0}</p>
+                <p className="text-xs font-medium text-emerald-600 mt-1">Defined in system</p>
               </div>
             </div>
 
@@ -98,7 +130,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-slate-500">Active Loans</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.activeLoans || 0}</p>
-                <p className="text-xs font-medium text-emerald-600 mt-1">+3 today</p>
+                <p className="text-xs font-medium text-emerald-600 mt-1">Currently loaned</p>
               </div>
             </div>
 
@@ -109,7 +141,9 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-rose-600">Overdue Books</p>
                 <p className="text-2xl font-bold text-rose-700 mt-1">{stats?.overdueBooks || 0}</p>
-                <p className="text-xs font-medium text-rose-500 mt-1">Action required</p>
+                <p className="text-xs font-medium text-rose-500 mt-1">
+                  {stats?.overdueBooks > 0 ? 'Action required' : 'No overdue items'}
+                </p>
               </div>
             </div>
           </div>
@@ -119,36 +153,28 @@ const Dashboard = () => {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-900">Recent Activity</h2>
-                <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All</a>
+                <Link to="/books" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All</Link>
               </div>
-              
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm divide-y divide-slate-100">
-                <div className="p-5 flex gap-4">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-indigo-500 shrink-0"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">Welcome to Borama Library!</p>
-                    <p className="text-sm text-slate-500 mt-1">Your account has been created successfully</p>
-                    <p className="text-xs font-medium text-slate-400 mt-2">Just now</p>
-                  </div>
-                </div>
-                
-                <div className="p-5 flex gap-4">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">New books added</p>
-                    <p className="text-sm text-slate-500 mt-1">5 new books have been added to the collection</p>
-                    <p className="text-xs font-medium text-slate-400 mt-2">Today, 10:42 AM</p>
-                  </div>
-                </div>
 
-                <div className="p-5 flex gap-4">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-amber-500 shrink-0"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">Library reminder</p>
-                    <p className="text-sm text-slate-500 mt-1">Don't forget to return your borrowed books</p>
-                    <p className="text-xs font-medium text-slate-400 mt-2">Yesterday</p>
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm divide-y divide-slate-100 overflow-hidden">
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="p-5 flex gap-4">
+                      <div className={`w-2 h-2 mt-2 rounded-full shrink-0 ${activity.color || 'bg-indigo-500'}`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-900">{activity.title}</p>
+                        <p className="text-sm text-slate-500 mt-1">{activity.description}</p>
+                        <p className="text-xs font-medium text-slate-400 mt-2">{formatRelativeTime(activity.timestamp)}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center">
+                    <BookOpenIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-slate-900">No recent activity yet</p>
+                    <p className="text-sm text-slate-500 mt-1">Add books or create user actions to populate the feed.</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -160,9 +186,15 @@ const Dashboard = () => {
                   About Borama
                 </h3>
                 <p className="text-indigo-100 text-sm mt-3 leading-relaxed">
-                  Borama Library is a digital library management system designed to help users browse, 
-                  search, and borrow books. Explore our collection of titles curated just for you.
+                  Borama Library is a digital library management system designed to help users browse,
+                  search, and borrow books. Explore your live collection, manage inventory, and track activity.
                 </p>
+                <Link
+                  to="/books"
+                  className="inline-flex mt-4 items-center justify-center rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/25 transition-colors"
+                >
+                  Open Inventory
+                </Link>
               </div>
 
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
@@ -171,8 +203,14 @@ const Dashboard = () => {
                   Need Help?
                 </h3>
                 <p className="text-slate-500 text-sm mt-3 leading-relaxed">
-                  Check our FAQ section or contact staff. We're here to help you find your next great read!
+                  Check the books inventory for live records or contact staff for support with loans and updates.
                 </p>
+                <Link
+                  to="/books"
+                  className="inline-flex mt-4 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Manage Books
+                </Link>
               </div>
             </div>
           </div>

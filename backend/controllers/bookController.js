@@ -110,48 +110,50 @@ exports.createBook = async (req, res) => {
     const {
       title,
       author,
-      isbn,
       category,
-      location,
-      publisher,
-      publicationYear,
-      pages,
       language,
-      description,
       quantity,
     } = req.body;
 
     // Validation
-    if (!title || !author || !isbn || !category || !location) {
+    if (!title || !author || !category) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields (title, author, isbn, category, location)',
+        message: 'Please provide all required fields (title, author, category)',
       });
     }
 
+    const cleanTitle = title.trim();
+    const cleanAuthor = author.trim();
+    const cleanCategory = category.trim();
+    const cleanLanguage = language?.trim() || 'Somali';
+    const cleanQuantity = Number.parseInt(quantity, 10) || 1;
+
     // Check if book already exists
-    const existingBook = await Book.findOne({ isbn });
+    const existingBook = await Book.findOne({
+      title: cleanTitle,
+      author: cleanAuthor,
+      category: cleanCategory,
+    });
     if (existingBook) {
       return res.status(400).json({
         success: false,
-        message: 'A book with this ISBN already exists',
+        message: 'This book already exists in the inventory',
       });
     }
 
+    const generatedIsbn = `BK-${Date.now()}`;
+
     // Create book
     const book = await Book.create({
-      title,
-      author,
-      isbn,
-      category,
-      location,
-      publisher,
-      publicationYear,
-      pages,
-      language: language || 'Somali',
-      description,
-      quantity: quantity || 1,
-      availableQuantity: quantity || 1,
+      title: cleanTitle,
+      author: cleanAuthor,
+      isbn: generatedIsbn,
+      category: cleanCategory,
+      location: 'Not assigned',
+      language: cleanLanguage,
+      quantity: cleanQuantity,
+      availableQuantity: cleanQuantity,
       addedBy: req.user ? req.user.id : null, // From auth middleware
     });
 
@@ -267,28 +269,37 @@ exports.getBooksByCategory = async (req, res) => {
 // Get category counts (for quick categories)
 exports.getCategoryCounts = async (req, res) => {
   try {
-    const categories = [
-      'History of Borama',
-      'Somali Poetry',
-      'Digital Systems',
-      'Agriculture',
-      'Literature',
-      'Science',
-      'Technology',
-      'Arts',
-    ];
+    // If a Category collection exists, use it; otherwise fallback to static list
+    let Category;
+    try {
+      Category = require('../models/Category');
+    } catch (e) {
+      Category = null;
+    }
 
-    const counts = await Promise.all(
-      categories.map(async (cat) => ({
-        name: cat,
-        count: await Book.countDocuments({ category: cat }),
-      }))
-    );
+    let counts = [];
+    if (Category) {
+      const cats = await Category.find().sort({ name: 1 });
+      counts = await Promise.all(
+        cats.map(async (c) => ({ name: c.name, count: await Book.countDocuments({ category: c.name }) }))
+      );
+    } else {
+      const categories = [
+        'History of Borama',
+        'Somali Poetry',
+        'Digital Systems',
+        'Agriculture',
+        'Literature',
+        'Science',
+        'Technology',
+        'Arts',
+      ];
+      counts = await Promise.all(
+        categories.map(async (cat) => ({ name: cat, count: await Book.countDocuments({ category: cat }) }))
+      );
+    }
 
-    res.status(200).json({
-      success: true,
-      categories: counts,
-    });
+    res.status(200).json({ success: true, categories: counts });
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -1,5 +1,5 @@
 // Sidebar navigation component
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   ChartPieIcon, 
   BookOpenIcon, 
@@ -23,8 +23,8 @@ const Sidebar = ({ userName }) => {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: ChartPieIcon },
     { name: 'Books Inventory', path: '/books', icon: BookOpenIcon },
-    { name: 'Categories', path: '#', icon: TagIcon },
-    { name: 'My Loans', path: '#', icon: ClipboardDocumentListIcon },
+    { name: 'Categories', path: '/categories', icon: TagIcon },
+    { name: 'Loans', path: '/loans', icon: ClipboardDocumentListIcon },
     { name: 'Settings', path: '#', icon: Cog6ToothIcon },
   ];
 
@@ -55,18 +55,18 @@ const Sidebar = ({ userName }) => {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <a
+            <Link
               key={item.name}
-              href={item.path}
+              to={item.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive 
-                  ? 'bg-indigo-50 text-indigo-700' 
+                isActive
+                  ? 'bg-indigo-50 text-indigo-700'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               <item.icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
               {item.name}
-            </a>
+            </Link>
           );
         })}
       </nav>

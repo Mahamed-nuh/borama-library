@@ -3,7 +3,7 @@ import { bookAPI } from '../services/api';
 import AddBookModal from '../components/AddBookModal';
 import BookTable from '../components/BookTable';
 import Sidebar from '../components/Sidebar';
-import { MagnifyingGlassIcon, PlusIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PlusIcon, FunnelIcon, ArrowPathIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
 const BookInventory = () => {
   const [books, setBooks] = useState([]);
@@ -127,14 +127,14 @@ const BookInventory = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">Books Inventory</h1>
-              <p className="mt-1 text-sm text-slate-500">Manage and track the library's physical collection.</p>
+              <p className="mt-1 text-sm text-slate-500">Manage the live collection with a clean, focused workflow.</p>
             </div>
             <button 
-              className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700"
               onClick={() => setShowAddModal(true)}
             >
               <PlusIcon className="w-5 h-5" />
-              Add New Book
+              Add Book
             </button>
           </div>
 
@@ -172,7 +172,7 @@ const BookInventory = () => {
                 <div className="p-4 space-y-6">
                   {/* Category Filter */}
                   <div className="space-y-3">
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase">Categories</h3>
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em]">Categories</h3>
                     <div className="flex flex-col space-y-1">
                       <button
                         className={`text-left px-3 py-2 rounded-lg text-sm transition-colors flex justify-between items-center ${
@@ -203,7 +203,7 @@ const BookInventory = () => {
 
                   {/* Status Filter */}
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase">Status</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em]">Status</label>
                     <select
                       className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none transition-shadow"
                       value={status}
@@ -219,7 +219,7 @@ const BookInventory = () => {
 
                   {/* Location Filter */}
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase">Shelf Location</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em]">Shelf Location</label>
                     <input
                       type="text"
                       placeholder="Search location..."
@@ -258,7 +258,7 @@ const BookInventory = () => {
                   <input
                     type="text"
                     className="block w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow transition-colors"
-                    placeholder="Search by title, author, or ISBN..."
+                    placeholder="Search by title, author, or category..."
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   />
